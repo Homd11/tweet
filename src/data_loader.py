@@ -119,7 +119,7 @@ class TweetDataLoader:
                 "neutral", "positive", "negative", "neutral", "positive",
                 "negative", "neutral", "positive", "negative", "neutral",
             ],
-            "date": pd.date_range("2024-01-01", periods=40, freq="6h"),
+            "date": [pd.Timestamp("2024-01-01") + pd.Timedelta(hours=6 * i) for i in range(40)],
         }
         return pd.DataFrame(sample_data)
 

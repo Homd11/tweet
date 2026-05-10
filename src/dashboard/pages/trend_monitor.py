@@ -20,7 +20,7 @@ def render():
 
     if "date" not in df.columns:
         st.warning("Dataset does not contain date information. Using simulated dates.")
-        df["date"] = pd.date_range("2024-01-01", periods=len(df), freq="6H")
+        df["date"] = [pd.Timestamp("2024-01-01") + pd.Timedelta(hours=6 * i) for i in range(len(df))]
 
     preprocessor = TweetPreprocessor()
     df_processed = preprocessor.preprocess_dataframe(df)
@@ -28,7 +28,7 @@ def render():
     analyzer = TrendAnalyzer()
     
     st.sidebar.markdown("---")
-    freq = st.sidebar.selectbox("Aggregation Frequency", ["H", "6H", "D", "W", "M"], index=2, format_func=lambda x: {"H": "Hourly", "6H": "6-Hourly", "D": "Daily", "W": "Weekly", "M": "Monthly"}.get(x, x))
+    freq = st.sidebar.selectbox("Aggregation Frequency", ["h", "6h", "D", "W", "ME"], index=2, format_func=lambda x: {"h": "Hourly", "6h": "6-Hourly", "D": "Daily", "W": "Weekly", "ME": "Monthly"}.get(x, x))
     rolling_window = st.sidebar.slider("Rolling Average Window", 3, 30, 7)
     anomaly_threshold = st.sidebar.slider("Anomaly Threshold (σ)", 1.0, 4.0, 2.0, 0.5)
 

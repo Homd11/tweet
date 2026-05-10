@@ -15,18 +15,44 @@ def render():
     st.title("💡 Opinion Dashboard")
     st.markdown("Explore aspect-level sentiment analysis with filterable heatmaps and top opinion phrases.")
 
-    loader = TweetDataLoader()
-    df = loader.load_sample_data()
-
-    preprocessor = TweetPreprocessor()
-    df_processed = preprocessor.preprocess_dataframe(df)
+    try:
+        loader = TweetDataLoader()
+        df = loader.load_sample_data()
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        return
 
     miner = OpinionMiner()
-    opinions_df = miner.extract_opinions_batch(df["text"].tolist())
+
+    try:
+        opinions_df = miner.extract_opinions_batch(df["text"].tolist())
+    except Exception as e:
+        st.error(f"Error extracting opinions: {e}")
+        opinions_df = pd.DataFrame(columns=["text", "target", "expression", "polarity"])
 
     if len(opinions_df) == 0:
-        st.warning("No opinions extracted. Try with more data.")
-        return
+        st.warning("No opinions extracted from the sample data. The opinion miner uses spaCy for dependency parsing. Try installing it with: `python -m spacy download en_core_web_sm`")
+        st.markdown("---")
+        st.markdown("### Demo Mode: Rule-Based Opinion Extraction")
+
+        positive_words = {"love", "great", "amazing", "excellent", "fantastic", "wonderful", "best", "good", "happy", "awesome", "incredible", "delicious", "phenomenal", "brilliant", "outstanding"}
+        negative_words = {"hate", "terrible", "awful", "worst", "bad", "horrible", "disappointing", "angry", "poor", "frustrated", "useless", "annoying", "broken", "ugly", "disgusting"}
+
+        rule_triplets = []
+        for text in df["text"]:
+            words = text.lower().split()
+            words = [w.strip(".,!?;:") for w in words]
+            for word in words:
+                if word in positive_words:
+                    rule_triplets.append({"text": text, "target": "general", "expression": word, "polarity": "positive"})
+                elif word in negative_words:
+                    rule_triplets.append({"text": text, "target": "general", "expression": word, "polarity": "negative"})
+
+        if not rule_triplets:
+            st.info("No opinions found even with rule-based extraction.")
+            return
+
+        opinions_df = pd.DataFrame(rule_triplets)
 
     st.markdown("---")
 
@@ -36,7 +62,11 @@ def render():
     )
     min_occurrences = st.sidebar.slider("Minimum Occurrences", 1, 10, 1)
 
-    filtered_df = opinions_df[opinions_df["polarity"].isin(filter_sentiment)]
+    valid_filters = [f for f in filter_sentiment if f in opinions_df["polarity"].unique()]
+    if not valid_filters:
+        valid_filters = opinions_df["polarity"].unique().tolist()
+
+    filtered_df = opinions_df[opinions_df["polarity"].isin(valid_filters)]
 
     if len(filtered_df) == 0:
         st.warning("No opinions match the filter criteria.")
@@ -58,11 +88,11 @@ def render():
 
         fig = go.Figure(
             data=go.Heatmap(
-                z=heatmap_data.values,
+                z=heatmap_data.values.tolist(),
                 x=heatmap_data.columns.tolist(),
                 y=heatmap_data.index.tolist(),
                 colorscale="RdYlGn",
-                text=heatmap_data.values,
+                text=heatmap_data.values.tolist(),
                 texttemplate="%{text}",
                 textfont={"size": 12},
             )
@@ -88,7 +118,11 @@ def render():
             pos_df = pd.DataFrame(positive_phrases, columns=["Phrase", "Count"])
             st.dataframe(pos_df, use_container_width=True)
         else:
-            st.info("No positive phrases found.")
+            pos_words = opinions_df[opinions_df["polarity"] == "positive"]["expression"].value_counts().head(15)
+            if len(pos_words) > 0:
+                st.dataframe(pos_words.reset_index().rename(columns={"index": "Phrase", "expression": "Phrase", "count": "Count"}), use_container_width=True)
+            else:
+                st.info("No positive phrases found.")
 
     with col2:
         st.markdown("### 😠 Top Negative Opinion Phrases")
@@ -97,7 +131,11 @@ def render():
             neg_df = pd.DataFrame(negative_phrases, columns=["Phrase", "Count"])
             st.dataframe(neg_df, use_container_width=True)
         else:
-            st.info("No negative phrases found.")
+            neg_words = opinions_df[opinions_df["polarity"] == "negative"]["expression"].value_counts().head(15)
+            if len(neg_words) > 0:
+                st.dataframe(neg_words.reset_index(), use_container_width=True)
+            else:
+                st.info("No negative phrases found.")
 
     st.markdown("---")
     st.markdown("### 📊 Polarity Distribution")
@@ -114,4 +152,5 @@ def render():
 
     st.markdown("---")
     st.markdown("### 📋 All Extracted Opinions")
-    st.dataframe(filtered_df[["text", "target", "expression", "polarity"]], use_container_width=True)
+    display_cols = [c for c in ["text", "target", "expression", "polarity"] if c in filtered_df.columns]
+    st.dataframe(filtered_df[display_cols], use_container_width=True)

@@ -15,23 +15,23 @@ def _load_models():
             from src.preprocessing import TweetPreprocessor
             from src.feature_extraction import FeatureExtractor
             from src.models.baseline import SentimentClassifier
-            from src.config.settings import BASELINE_MODELS_DIR, ARTIFACTS_DIR
+            from sklearn.preprocessing import LabelEncoder
 
             loader = TweetDataLoader()
             df = loader.load_sample_data()
 
             preprocessor = TweetPreprocessor()
             df = preprocessor.preprocess_dataframe(df)
+            df = df[df["cleaned_text"].str.len() > 0]
 
             feature_ext = FeatureExtractor()
             X = feature_ext.fit_transform_tfidf(df["cleaned_text"].tolist())
 
-            from sklearn.preprocessing import LabelEncoder
             le = LabelEncoder()
             y = le.fit_transform(df["sentiment"].tolist())
 
             model = SentimentClassifier("logistic_regression")
-            model.fit(X, y, use_calibration=True)
+            model.fit(X, y, cv_folds=3, use_calibration=False)
 
             st.session_state["baseline_model"] = model
             st.session_state["feature_extractor"] = feature_ext

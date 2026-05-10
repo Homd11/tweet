@@ -25,6 +25,7 @@ def _load_models():
 
             preprocessor = TweetPreprocessor()
             df = preprocessor.preprocess_dataframe(df)
+            df = df[df["cleaned_text"].str.len() > 0]
 
             feature_ext = FeatureExtractor()
             X = feature_ext.fit_transform_tfidf(df["cleaned_text"].tolist())
@@ -33,7 +34,7 @@ def _load_models():
             y = le.fit_transform(df["sentiment"].tolist())
 
             model = SentimentClassifier("logistic_regression")
-            model.fit(X, y, use_calibration=True)
+            model.fit(X, y, cv_folds=3, use_calibration=False)
 
             st.session_state["baseline_model"] = model
             st.session_state["feature_extractor"] = feature_ext

@@ -90,16 +90,31 @@ class BERTClassifier:
             processed.append(text)
         return processed
 
+    LABEL_MAP = {
+        "label_0": "negative",
+        "label_1": "neutral",
+        "label_2": "positive",
+        "negative": "negative",
+        "neutral": "neutral",
+        "positive": "positive",
+        "pos": "positive",
+        "neg": "negative",
+    }
+
+    def _map_label(self, label: str) -> str:
+        return self.LABEL_MAP.get(label.lower(), label.lower())
+
     def predict_single(self, text: str) -> Dict[str, Any]:
         if self.pipeline is None:
             raise ModelTrainingError("Model not loaded. Call load_pretrained() first.")
         if self.is_arabic:
             text = self.preprocess_for_arabic([text])[0]
         result = self.pipeline(text)[0]
+        mapped = self._map_label(result["label"])
         return {
-            "sentiment": result["label"].lower(),
+            "sentiment": mapped,
             "confidence": float(result["score"]),
-            "label": result["label"],
+            "label": mapped,
             "score": float(result["score"]),
         }
 
@@ -113,10 +128,11 @@ class BERTClassifier:
             batch = texts[i : i + batch_size]
             batch_results = self.pipeline(batch)
             for result in batch_results:
+                mapped = self._map_label(result["label"])
                 results.append({
-                    "sentiment": result["label"].lower(),
+                    "sentiment": mapped,
                     "confidence": float(result["score"]),
-                    "label": result["label"],
+                    "label": mapped,
                     "score": float(result["score"]),
                 })
         return results

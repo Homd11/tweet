@@ -29,15 +29,9 @@ class OpinionMiner:
                 self.nlp = spacy.load(spacy_model)
                 app_logger.info(f"spaCy model '{spacy_model}' loaded successfully")
             except OSError:
-                app_logger.warning(f"spaCy model '{spacy_model}' not found. Attempting download...")
-                try:
-                    spacy.cli.download(spacy_model)
-                    self.nlp = spacy.load(spacy_model)
-                    app_logger.info(f"spaCy model '{spacy_model}' downloaded and loaded")
-                except Exception as e:
-                    app_logger.warning(f"Failed to download spaCy model: {e}. Using rule-based fallback.")
-                    self.use_spacy = False
-                    self.nlp = None
+                app_logger.warning(f"spaCy model '{spacy_model}' not found. Using rule-based fallback.")
+                self.use_spacy = False
+                self.nlp = None
 
     def extract_opinion_triplets(self, text: str) -> List[Dict[str, str]]:
         triplets = []

@@ -132,7 +132,7 @@ def render():
                 "Expression": triplet["expression"],
                 "Polarity": triplet["polarity"],
             })
-        st.dataframe(aspect_data, use_container_width=True)
+        st.dataframe(aspect_data, use_container_width=False)
     else:
         st.info("No specific aspects detected in this text.")
 

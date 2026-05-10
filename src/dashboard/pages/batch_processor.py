@@ -72,7 +72,7 @@ def render():
                 return
 
             st.markdown("### Data Preview")
-            st.dataframe(df.head(10), use_container_width=True)
+            st.dataframe(df.head(10), use_container_width=False)
 
             if st.button("🚀 Process All Reviews", type="primary"):
                 preprocessor = st.session_state["preprocessor"]
@@ -122,7 +122,7 @@ def render():
                 status.success("Processing complete!")
 
                 st.markdown("### Results")
-                st.dataframe(df.head(20), use_container_width=True)
+                st.dataframe(df.head(20), use_container_width=False)
 
                 st.markdown("### Sentiment Distribution")
                 sentiment_counts = df["predicted_sentiment"].value_counts()

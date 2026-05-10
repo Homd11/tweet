@@ -134,7 +134,7 @@ def render():
                 if language == "arabic" or is_arabic_text(text_input):
                     bert_model_inst = BERTClassifier(model_name="aubmindlab/bert-base-arabertv02", is_arabic=True)
                 else:
-                    bert_model_inst = BERTClassifier(model_name="bert-base-uncased")
+                    bert_model_inst = BERTClassifier(model_name="cardiffnlp/twitter-roberta-base-sentiment")
 
                 with st.spinner("Loading BERT model... This may take a while on first run."):
                     bert_model_inst.load_pretrained()
@@ -176,7 +176,7 @@ def render():
                         "Sentiment": [lr_label, bert_label],
                         "Confidence": [f"{st.session_state['lr_result']['confidence']:.2%}", f"{bert_confidence:.2%}"],
                     })
-                    st.dataframe(comparison, use_container_width=True)
+                    st.dataframe(comparison, use_container_width=False)
 
                     if lr_label.lower() == bert_label.lower():
                         st.success("✅ Both models agree on the sentiment!")

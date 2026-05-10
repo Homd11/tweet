@@ -31,7 +31,7 @@ DEVICE = get_device()
 class BERTClassifier:
     def __init__(
         self,
-        model_name: str = "bert-base-uncased",
+        model_name: str = "cardiffnlp/twitter-roberta-base-sentiment",
         max_length: int = 128,
         num_labels: int = 3,
         is_arabic: bool = False,
@@ -99,10 +99,25 @@ class BERTClassifier:
         "positive": "positive",
         "pos": "positive",
         "neg": "negative",
+        "neg_label": "negative",
+        "neu_label": "neutral",
+        "pos_label": "positive",
+    }
+
+    ROBERTA_LABEL_MAP = {
+        "LABEL_0": "negative",
+        "LABEL_1": "neutral",
+        "LABEL_2": "positive",
     }
 
     def _map_label(self, label: str) -> str:
-        return self.LABEL_MAP.get(label.lower(), label.lower())
+        result = self.LABEL_MAP.get(label.lower(), None)
+        if result:
+            return result
+        result = self.ROBERTA_LABEL_MAP.get(label, None)
+        if result:
+            return result
+        return label.lower()
 
     def predict_single(self, text: str) -> Dict[str, Any]:
         if self.pipeline is None:
@@ -170,7 +185,7 @@ class BERTClassifier:
         return info
 
 
-def get_sentiment_pipeline(model_name: str = "bert-base-uncased", is_arabic: bool = False):
+def get_sentiment_pipeline(model_name: str = "cardiffnlp/twitter-roberta-base-sentiment", is_arabic: bool = False):
     if is_arabic:
         model_name = "aubmindlab/bert-base-arabertv02"
     classifier = BERTClassifier(model_name=model_name, is_arabic=is_arabic)

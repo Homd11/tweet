@@ -24,27 +24,34 @@ class TrendAnalyzer:
 
             sentiment_map = {"positive": 1, "neutral": 0, "negative": -1}
             if df[sentiment_column].dtype == object:
-                df["sentiment_score"] = df[sentiment_column].map(sentiment_map)
+                df["sentiment_score"] = df[sentiment_column].map(sentiment_map).astype(float)
             else:
-                df["sentiment_score"] = df[sentiment_column]
+                df["sentiment_score"] = df[sentiment_column].astype(float)
 
             df = df.dropna(subset=["sentiment_score"])
 
-            daily = df.set_index(date_column).resample(freq)
+            grouped = df.set_index(date_column).groupby(pd.Grouper(freq=freq))
 
-            trends = pd.DataFrame({
-                "mean_sentiment": daily["sentiment_score"].mean(),
-                "positive_count": daily["sentiment_score"].apply(lambda x: (x > 0).sum()),
-                "negative_count": daily["sentiment_score"].apply(lambda x: (x < 0).sum()),
-                "neutral_count": daily["sentiment_score"].apply(lambda x: (x == 0).sum()),
-                "total_count": daily["sentiment_score"].count(),
-                "positive_ratio": daily["sentiment_score"].apply(
-                    lambda x: (x > 0).sum() / len(x) if len(x) > 0 else 0
-                ),
-                "negative_ratio": daily["sentiment_score"].apply(
-                    lambda x: (x < 0).sum() / len(x) if len(x) > 0 else 0
-                ),
-            })
+            results = []
+            for name, group in grouped:
+                if len(group) == 0:
+                    continue
+                scores = group["sentiment_score"]
+                results.append({
+                    "date": name,
+                    "mean_sentiment": float(scores.mean()),
+                    "positive_count": int((scores > 0).sum()),
+                    "negative_count": int((scores < 0).sum()),
+                    "neutral_count": int((scores == 0).sum()),
+                    "total_count": len(scores),
+                    "positive_ratio": float((scores > 0).sum() / len(scores)),
+                    "negative_ratio": float((scores < 0).sum() / len(scores)),
+                })
+
+            if not results:
+                return pd.DataFrame()
+
+            trends = pd.DataFrame(results).set_index("date")
 
             trends = trends.dropna(subset=["mean_sentiment"])
             self.trends_data = trends
@@ -104,10 +111,12 @@ class TrendAnalyzer:
 
         negative_df = df[df[sentiment_column] == "negative"]
         if len(negative_df) > 0:
-            negative_df = negative_df.set_index(date_column).resample(freq)
+            negative_df = negative_df.copy()
+            negative_df[date_column] = pd.to_datetime(negative_df[date_column])
+            negative_grouped = negative_df.set_index(date_column).groupby(pd.Grouper(freq=freq))
             topic_trends = []
 
-            for period, group in negative_df:
+            for period, group in negative_grouped:
                 if len(group) > 0:
                     words = []
                     for text in group[text_column]:
@@ -133,10 +142,12 @@ class TrendAnalyzer:
 
         positive_df = df[df[sentiment_column] == "positive"]
         if len(positive_df) > 0:
-            positive_periods = positive_df.set_index(date_column).resample(freq)
+            positive_df = positive_df.copy()
+            positive_df[date_column] = pd.to_datetime(positive_df[date_column])
+            positive_grouped = positive_df.set_index(date_column).groupby(pd.Grouper(freq=freq))
             pos_topics = []
 
-            for period, group in positive_periods:
+            for period, group in positive_grouped:
                 if len(group) > 0:
                     words = []
                     for text in group[text_column]:

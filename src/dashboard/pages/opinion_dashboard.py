@@ -103,7 +103,7 @@ def render():
             yaxis_title="Aspect (Target)",
             height=max(400, len(heatmap_data) * 30),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
     else:
         st.info("Not enough data for heatmap visualization.")
 
@@ -116,11 +116,11 @@ def render():
         positive_phrases = miner.get_top_opinion_phrases(df["text"].tolist(), polarity="positive", top_n=15)
         if positive_phrases:
             pos_df = pd.DataFrame(positive_phrases, columns=["Phrase", "Count"])
-            st.dataframe(pos_df, use_container_width=True)
+            st.dataframe(pos_df, use_container_width=False)
         else:
             pos_words = opinions_df[opinions_df["polarity"] == "positive"]["expression"].value_counts().head(15)
             if len(pos_words) > 0:
-                st.dataframe(pos_words.reset_index().rename(columns={"index": "Phrase", "expression": "Phrase", "count": "Count"}), use_container_width=True)
+                st.dataframe(pos_words.reset_index().rename(columns={"index": "Phrase", "expression": "Phrase", "count": "Count"}), use_container_width=False)
             else:
                 st.info("No positive phrases found.")
 
@@ -129,11 +129,11 @@ def render():
         negative_phrases = miner.get_top_opinion_phrases(df["text"].tolist(), polarity="negative", top_n=15)
         if negative_phrases:
             neg_df = pd.DataFrame(negative_phrases, columns=["Phrase", "Count"])
-            st.dataframe(neg_df, use_container_width=True)
+            st.dataframe(neg_df, use_container_width=False)
         else:
             neg_words = opinions_df[opinions_df["polarity"] == "negative"]["expression"].value_counts().head(15)
             if len(neg_words) > 0:
-                st.dataframe(neg_words.reset_index(), use_container_width=True)
+                st.dataframe(neg_words.reset_index(), use_container_width=False)
             else:
                 st.info("No negative phrases found.")
 
@@ -148,9 +148,9 @@ def render():
         color_discrete_map={"positive": "#2ecc71", "negative": "#e74c3c", "neutral": "#f39c12"},
         title="Overall Polarity Distribution",
     )
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie)
 
     st.markdown("---")
     st.markdown("### 📋 All Extracted Opinions")
     display_cols = [c for c in ["text", "target", "expression", "polarity"] if c in filtered_df.columns]
-    st.dataframe(filtered_df[display_cols], use_container_width=True)
+    st.dataframe(filtered_df[display_cols], use_container_width=False)

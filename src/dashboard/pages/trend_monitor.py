@@ -76,7 +76,7 @@ def render():
         yaxis_title="Sentiment Score",
         hovermode="x unified",
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
 
     st.markdown("---")
 
@@ -103,7 +103,7 @@ def render():
             xaxis_title="Date",
             yaxis_title="Count",
         )
-        st.plotly_chart(fig_volume, use_container_width=True)
+        st.plotly_chart(fig_volume)
 
     with col2:
         st.markdown("### 📊 Sentiment Ratio")
@@ -120,7 +120,7 @@ def render():
             xaxis_title="Date",
             yaxis_title="Ratio",
         )
-        st.plotly_chart(fig_ratio, use_container_width=True)
+        st.plotly_chart(fig_ratio)
 
     st.markdown("---")
 
@@ -128,7 +128,7 @@ def render():
         st.markdown("### 🚨 Detected Anomalies")
         anomaly_display = anomalies[["mean_sentiment", "z_score", "shift_direction"]].copy()
         anomaly_display.columns = ["Sentiment Score", "Z-Score", "Direction"]
-        st.dataframe(anomaly_display, use_container_width=True)
+        st.dataframe(anomaly_display, use_container_width=False)
     else:
         st.info("No anomalies detected with current threshold.")
 
@@ -141,4 +141,4 @@ def render():
     emerging = analyzer.detect_emerging_topics(df, freq="W", top_n=10)
     if "negative_topics" in emerging and len(emerging["negative_topics"]) > 0:
         st.markdown("### 🔴 Emerging Negative Topics")
-        st.dataframe(emerging["negative_topics"], use_container_width=True)
+        st.dataframe(emerging["negative_topics"], use_container_width=False)

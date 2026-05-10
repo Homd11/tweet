@@ -96,8 +96,9 @@ def render():
             f"<div style='text-align:center; font-size:3em;'>{sentiment_icons.get(sentiment_label, '❓')}</div>",
             unsafe_allow_html=True,
         )
+        color = sentiment_colors.get(sentiment_label, "#333")
         st.markdown(
-            f"<div style='text-align:center; font-size:1.5em; color:{sentiment_colors.get(sentiment_label, \"#333\")}; font-weight:bold;'>"
+            f"<div style='text-align:center; font-size:1.5em; color:{color}; font-weight:bold;'>"
             f"{sentiment_label.upper()}</div>",
             unsafe_allow_html=True,
         )
